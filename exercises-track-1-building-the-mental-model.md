@@ -16,46 +16,70 @@
 
 ### The buggy code
 
-Here's a Python function that's supposed to calculate the average rating from a list of product reviews. It has several bugs.
+Here's a C# method that's supposed to calculate the average rating from a list of product reviews. It has several bugs.
 
-```python
-def calculate_average_rating(reviews):
-    """Calculate the average star rating from a list of reviews.
+```csharp
+using System;
+using System.Collections.Generic;
 
-    Args:
-        reviews: List of dicts, each with a 'rating' key (1-5 stars)
-                 and a 'verified' key (boolean).
-                 Example: [{"rating": 4, "verified": True}, {"rating": 2, "verified": False}]
+public class Review
+{
+    public int Rating { get; set; }    // 1-5 stars
+    public bool Verified { get; set; }
+}
 
-    Returns:
-        The average rating rounded to one decimal place.
-        Returns 0 if there are no reviews.
-    """
-    total = 0
-    for review in reviews:
-        total += review["rating"]
+public class RatingCalculator
+{
+    /// <summary>
+    /// Calculate the average star rating from a list of reviews.
+    /// Returns the average rounded to one decimal place.
+    /// Returns 0 if there are no reviews.
+    /// </summary>
+    public static double CalculateAverageRating(List<Review> reviews)
+    {
+        int total = 0;
+        foreach (var review in reviews)
+        {
+            total += review.Rating;
+        }
 
-    average = total / len(reviews)
-    return round(average)
+        double average = total / reviews.Count;
+        return Math.Round(average);
+    }
+}
 
+// These should all work correctly:
+public class Program
+{
+    public static void Main()
+    {
+        // Expected: 0
+        Console.WriteLine(RatingCalculator.CalculateAverageRating(new List<Review>()));
 
-# These should all work correctly:
-print(calculate_average_rating([]))  # Expected: 0
-print(calculate_average_rating([{"rating": 5, "verified": True}]))  # Expected: 5.0
-print(calculate_average_rating([
-    {"rating": 4, "verified": True},
-    {"rating": 3, "verified": True},
-    {"rating": 5, "verified": False},
-]))  # Expected: 4.0
+        // Expected: 5.0
+        Console.WriteLine(RatingCalculator.CalculateAverageRating(new List<Review>
+        {
+            new Review { Rating = 5, Verified = true }
+        }));
+
+        // Expected: 4.0
+        Console.WriteLine(RatingCalculator.CalculateAverageRating(new List<Review>
+        {
+            new Review { Rating = 4, Verified = true },
+            new Review { Rating = 3, Verified = true },
+            new Review { Rating = 5, Verified = false },
+        }));
+    }
+}
 ```
 
 ### What to do
 
-1. **Copy the code above** into a file called `ratings.py` (or whatever you like).
+1. **Copy the code above** into a file called `RatingCalculator.cs` (or whatever you like).
 
 2. **Open it with your AI tool:**
-   - **Claude Code:** In your terminal, navigate to the directory and run `claude`. Then say: *"Look at ratings.py. There are bugs - find them and fix them."*
-   - **Cursor:** Open the file in Cursor. Select all the code, open the inline chat (Ctrl+K / Cmd+K), and say: *"This function has bugs. Find and fix them."*
+   - **Claude Code:** In your terminal, navigate to the directory and run `claude`. Then say: *"Look at RatingCalculator.cs. There are bugs - find them and fix them."*
+   - **Cursor:** Open the file in Cursor. Select all the code, open the inline chat (Ctrl+K / Cmd+K), and say: *"This code has bugs. Find and fix them."*
 
 3. **Watch what happens.** Don't just accept the fix - observe:
    - What bugs did the AI find?
@@ -89,138 +113,196 @@ After you've completed the exercise, take a minute to reflect:
 
 Below is a small project (3 files) that implements a basic task queue. You don't need to know how it works yet - that's the point.
 
-**File: `task_queue.py`**
-```python
-import time
-import threading
-from collections import deque
+**File: `WorkItem.cs`**
+```csharp
+using System;
 
+public class WorkItem
+{
+    public string Name { get; }
+    public Func<string> Action { get; }
+    public int Priority { get; }
+    public string Status { get; set; } = "pending";
+    public string? Result { get; set; }
+    public Exception? Error { get; set; }
+    public DateTime CreatedAt { get; } = DateTime.UtcNow;
 
-class Task:
-    def __init__(self, name, fn, priority=0):
-        self.name = name
-        self.fn = fn
-        self.priority = priority
-        self.status = "pending"
-        self.result = None
-        self.error = None
-        self.created_at = time.time()
+    public WorkItem(string name, Func<string> action, int priority = 0)
+    {
+        Name = name;
+        Action = action;
+        Priority = priority;
+    }
 
-    def __repr__(self):
-        return f"Task({self.name!r}, status={self.status})"
-
-
-class TaskQueue:
-    def __init__(self, max_workers=2):
-        self._queue = deque()
-        self._lock = threading.Lock()
-        self._workers = []
-        self._running = False
-        self.max_workers = max_workers
-        self.completed = []
-
-    def add(self, task):
-        with self._lock:
-            self._queue.append(task)
-            self._queue = deque(
-                sorted(self._queue, key=lambda t: -t.priority)
-            )
-
-    def start(self):
-        self._running = True
-        for i in range(self.max_workers):
-            w = threading.Thread(target=self._worker, name=f"worker-{i}", daemon=True)
-            self._workers.append(w)
-            w.start()
-
-    def stop(self):
-        self._running = False
-        for w in self._workers:
-            w.join(timeout=5)
-
-    def _worker(self):
-        while self._running:
-            task = None
-            with self._lock:
-                if self._queue:
-                    task = self._queue.popleft()
-            if task is None:
-                time.sleep(0.1)
-                continue
-            task.status = "running"
-            try:
-                task.result = task.fn()
-                task.status = "done"
-            except Exception as e:
-                task.error = e
-                task.status = "failed"
-            with self._lock:
-                self.completed.append(task)
+    public override string ToString() => $"WorkItem({Name}, status={Status})";
+}
 ```
 
-**File: `handlers.py`**
-```python
-import time
-import random
+**File: `TaskQueue.cs`**
+```csharp
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 
+public class TaskQueue
+{
+    private readonly LinkedList<WorkItem> _queue = new();
+    private readonly object _lock = new();
+    private readonly List<Thread> _workers = new();
+    private volatile bool _running;
+    private readonly int _maxWorkers;
 
-def fetch_data():
-    """Simulate fetching data from an external API."""
-    time.sleep(random.uniform(0.5, 1.5))
-    if random.random() < 0.2:
-        raise ConnectionError("API timeout")
-    return {"users": random.randint(10, 100), "timestamp": time.time()}
+    public List<WorkItem> Completed { get; } = new();
 
+    public TaskQueue(int maxWorkers = 2)
+    {
+        _maxWorkers = maxWorkers;
+    }
 
-def generate_report(data=None):
-    """Simulate generating a report."""
-    time.sleep(random.uniform(0.3, 0.8))
-    return f"Report generated with {data or 'no'} data"
+    public void Add(WorkItem item)
+    {
+        lock (_lock)
+        {
+            _queue.AddLast(item);
+            var sorted = _queue.OrderByDescending(t => t.Priority).ToList();
+            _queue.Clear();
+            foreach (var t in sorted) _queue.AddLast(t);
+        }
+    }
 
+    public void Start()
+    {
+        _running = true;
+        for (int i = 0; i < _maxWorkers; i++)
+        {
+            var worker = new Thread(WorkerLoop)
+            {
+                Name = $"worker-{i}",
+                IsBackground = true
+            };
+            _workers.Add(worker);
+            worker.Start();
+        }
+    }
 
-def send_notification(message="Task complete"):
-    """Simulate sending a notification."""
-    time.sleep(0.2)
-    return f"Sent: {message}"
+    public void Stop()
+    {
+        _running = false;
+        foreach (var w in _workers)
+            w.Join(TimeSpan.FromSeconds(5));
+    }
+
+    private void WorkerLoop()
+    {
+        while (_running)
+        {
+            WorkItem? item = null;
+            lock (_lock)
+            {
+                if (_queue.Count > 0)
+                {
+                    item = _queue.First!.Value;
+                    _queue.RemoveFirst();
+                }
+            }
+            if (item == null)
+            {
+                Thread.Sleep(100);
+                continue;
+            }
+            item.Status = "running";
+            try
+            {
+                item.Result = item.Action();
+                item.Status = "done";
+            }
+            catch (Exception ex)
+            {
+                item.Error = ex;
+                item.Status = "failed";
+            }
+            lock (_lock)
+            {
+                Completed.Add(item);
+            }
+        }
+    }
+}
 ```
 
-**File: `main.py`**
-```python
-from task_queue import Task, TaskQueue
-from handlers import fetch_data, generate_report, send_notification
+**File: `Handlers.cs`**
+```csharp
+using System;
+using System.Threading;
 
+public static class Handlers
+{
+    private static readonly Random Rng = new();
 
-def run():
-    queue = TaskQueue(max_workers=3)
+    /// <summary>Simulate fetching data from an external API.</summary>
+    public static string FetchData()
+    {
+        Thread.Sleep(Rng.Next(500, 1500));
+        if (Rng.NextDouble() < 0.2)
+            throw new HttpRequestException("API timeout");
+        int users = Rng.Next(10, 100);
+        return $"{{\"users\": {users}, \"timestamp\": \"{DateTime.UtcNow:O}\"}}";
+    }
 
-    queue.add(Task("fetch-users", fetch_data, priority=10))
-    queue.add(Task("fetch-orders", fetch_data, priority=10))
-    queue.add(Task("weekly-report", generate_report, priority=5))
-    queue.add(Task("notify-admin", lambda: send_notification("All tasks queued"), priority=1))
+    /// <summary>Simulate generating a report.</summary>
+    public static string GenerateReport(string? data = null)
+    {
+        Thread.Sleep(Rng.Next(300, 800));
+        return $"Report generated with {data ?? "no"} data";
+    }
 
-    queue.start()
+    /// <summary>Simulate sending a notification.</summary>
+    public static string SendNotification(string message = "Task complete")
+    {
+        Thread.Sleep(200);
+        return $"Sent: {message}";
+    }
+}
+```
 
-    import time
-    time.sleep(5)
-    queue.stop()
+**File: `Program.cs`**
+```csharp
+using System;
+using System.Threading;
 
-    print(f"Completed {len(queue.completed)} tasks:")
-    for task in queue.completed:
-        print(f"  {task.name}: {task.status} -> {task.result or task.error}")
+public class Program
+{
+    public static void Main()
+    {
+        var queue = new TaskQueue(maxWorkers: 3);
 
+        queue.Add(new WorkItem("fetch-users", Handlers.FetchData, priority: 10));
+        queue.Add(new WorkItem("fetch-orders", Handlers.FetchData, priority: 10));
+        queue.Add(new WorkItem("weekly-report", () => Handlers.GenerateReport(), priority: 5));
+        queue.Add(new WorkItem("notify-admin", () => Handlers.SendNotification("All tasks queued"), priority: 1));
 
-if __name__ == "__main__":
-    run()
+        queue.Start();
+        Thread.Sleep(5000);
+        queue.Stop();
+
+        Console.WriteLine($"Completed {queue.Completed.Count} tasks:");
+        foreach (var item in queue.Completed)
+        {
+            Console.WriteLine($"  {item.Name}: {item.Status} -> {item.Result ?? item.Error?.Message}");
+        }
+    }
+}
 ```
 
 ### What to do
 
-1. **Create these three files** in a folder (or just read them here - you don't need to run them).
+1. **Create these four files** in a folder (or just read them here - you don't need to run them).
 
 2. **Ask the AI to explain the project.** Start broad, then get specific:
    - *"What does this project do? Give me a high-level overview."*
    - *"How does the priority system work? Walk me through what happens when I add a high-priority task after a low-priority one."*
-   - *"What happens when `fetch_data` raises a ConnectionError? Trace the flow from the exception to where it ends up."*
+   - *"What happens when `FetchData` throws an HttpRequestException? Trace the flow from the exception to where it ends up."*
    - *"Are there any concurrency issues in this code?"*
 
 3. **Push deeper on one answer.** Pick whichever response you found most interesting and ask a follow-up. For example:
@@ -262,7 +344,7 @@ Choose one of these low-risk tasks from your own codebase. Pick whichever feels 
 Don't just say "add a log." Give the AI enough to do it well:
 
 > **Claude Code example:**
-> *"In `src/services/order_service.py`, the `create_order` function doesn't have any logging. Add a structured log message at the start of the function that logs the user ID and number of items. Use the same logging pattern as `update_order` in the same file. Use our existing logger - don't create a new one."*
+> *"In `Services/OrderService.cs`, the `CreateOrder` method doesn't have any logging. Add a structured log message at the start of the method that logs the user ID and number of items. Use the same ILogger pattern as `UpdateOrder` in the same file. Use our existing logger - don't create a new one."*
 
 > **Cursor example:**
 > Open the file, select the function, and use inline chat or agent mode with a similar prompt.
