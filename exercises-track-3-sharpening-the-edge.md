@@ -18,41 +18,42 @@
 
 Here's a function signature and its expected behavior. Your job: write the tests first (or have the agent write them from the spec), then have the agent implement the function to pass the tests.
 
-**Function:** `parse_duration(s: str) -> int`
+**Method:** `int ParseDuration(string input)`
 
 **Behavior:**
 - Parses a human-readable duration string and returns total seconds
 - Supported formats: `"30s"`, `"5m"`, `"2h"`, `"1d"`, `"1h30m"`, `"2d12h"`, `"1h30m45s"`
 - Units: `s` = seconds, `m` = minutes, `h` = hours, `d` = days
 - Compound durations must be in descending unit order (d, h, m, s)
-- Invalid input raises `ValueError` with a descriptive message
+- Invalid input throws `FormatException` with a descriptive message
+- `null` input throws `ArgumentNullException`
 - Leading/trailing whitespace is stripped
 - The string `"0s"` returns `0`
-- Negative values are not supported (raise `ValueError`)
+- Negative values are not supported (throw `FormatException`)
 
 ### Step 1: Write the tests first
 
-Give the AI the function signature and behavior above, and ask it to **write only the tests**:
+Give the AI the method signature and behavior above, and ask it to **write only the tests**:
 
-> *"Here's a function signature and spec. Write a comprehensive pytest test suite for it. Do NOT implement the function yet - just write the tests. Put a placeholder `pass` in the function body so the tests can import it.*
+> *"Here's a C# method signature and spec. Write a comprehensive xUnit test class for it. Do NOT implement the method yet - just write the tests. Put a `throw new NotImplementedException();` in the method body so the tests can compile.*
 >
-> *[paste the function signature and behavior above]*
+> *[paste the method signature and behavior above]*
 >
-> *Make sure to test: each unit individually, compound durations, edge cases (whitespace, '0s'), and all the error cases (invalid format, negative values, wrong unit order, empty string)."*
+> *Make sure to test: each unit individually, compound durations, edge cases (whitespace, '0s', null), and all the error cases (invalid format, negative values, wrong unit order, empty string). Use `[Theory]` and `[InlineData]` where it makes sense."*
 
 **Review the tests before moving on.** Check:
 - [ ] Do the tests cover all the behaviors listed in the spec?
 - [ ] Are the expected values correct? (e.g., `"1h30m"` = 5400 seconds)
 - [ ] Are edge cases included?
-- [ ] Do the tests for `ValueError` check the error message, not just the exception type?
+- [ ] Do the tests for `FormatException` check the error message, not just the exception type?
 
 ### Step 2: Implement to pass the tests
 
 Now tell the agent:
 
-> *"Implement the `parse_duration` function so all the tests pass. Run the tests and iterate until they're green."*
+> *"Implement the `ParseDuration` method so all the tests pass. Run the tests and iterate until they're green."*
 
-- **Claude Code:** The agent can run `pytest` directly. Let it iterate.
+- **Claude Code:** The agent can run `dotnet test` directly. Let it iterate.
 - **Cursor:** You may need to run tests manually and paste failures back, or use the terminal integration.
 
 ### Step 3: Review the implementation
@@ -115,8 +116,8 @@ At each checkpoint, review and redirect if needed. Common places the agent goes 
 | Symptom | What to say |
 |---------|------------|
 | Over-engineers the Markdown parser (full AST) | *"We don't need a full parser. A regex for `[text](url)` patterns is fine for this use case."* |
-| Doesn't mock HTTP calls in tests | *"Don't make real HTTP requests in tests. Use `unittest.mock.patch` or `responses` library."* |
-| Ignores concurrent execution | *"The plan included concurrent checking. Implement that - use `asyncio` or `concurrent.futures`."* |
+| Doesn't mock HTTP calls in tests | *"Don't make real HTTP requests in tests. Use a mock `HttpMessageHandler` or the `Moq` library to stub `HttpClient` responses."* |
+| Ignores concurrent execution | *"The plan included concurrent checking. Implement that - use `async/await` with `Task.WhenAll` and a `SemaphoreSlim` to limit concurrency."* |
 | Adds features you didn't ask for | *"Remove the HTML output option. Stick to the spec - plain text report to stdout."* |
 
 ### Phase 3: Reflect on when you intervened
@@ -158,21 +159,21 @@ If you haven't already, create a project context file in your repo:
 # Project Context
 
 ## Tech stack
-[Your stack - e.g., Python 3.11, FastAPI, PostgreSQL, pytest]
+[Your stack - e.g., .NET 8, ASP.NET Core, SQL Server, xUnit]
 
 ## Architecture
-[Brief description - e.g., "Monorepo with services in /src/services,
-shared models in /src/models, tests mirror src structure in /tests"]
+[Brief description - e.g., "Solution with services in /src/Services,
+shared models in /src/Models, tests mirror src structure in /tests"]
 
 ## Conventions
-- [Your conventions - e.g., "Use structured logging via structlog"]
-- [Test pattern - e.g., "Integration tests use the test database fixture in conftest.py"]
+- [Your conventions - e.g., "Use structured logging via Serilog and ILogger<T>"]
+- [Test pattern - e.g., "Integration tests use WebApplicationFactory and a test database fixture"]
 - [Code style - e.g., "Follow existing patterns in the codebase over general best practices"]
 
 ## Common commands
-- Run tests: [your command]
-- Run linter: [your command]
-- Start dev server: [your command]
+- Run tests: [your command, e.g., dotnet test]
+- Run linter: [your command, e.g., dotnet format --verify-no-changes]
+- Start dev server: [your command, e.g., dotnet run --project src/Api]
 ```
 
 **For Cursor** - create `.cursorrules` in your repo root with similar content.
