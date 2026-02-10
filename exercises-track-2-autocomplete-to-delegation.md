@@ -35,16 +35,16 @@ That's it. Don't add anything. Let the agent work and produce its result.
 
 Now give it this prompt:
 
-> *"Build a Python CLI tool called `csv2json` that converts a CSV file to JSON. Requirements:*
+> *"Build a C# console application called `Csv2Json` that converts a CSV file to JSON. Requirements:*
 >
-> *- Uses only the Python standard library (no external dependencies)*
-> *- Takes the input CSV path as the first positional argument*
+> *- Uses only the .NET standard libraries (no NuGet packages) - use System.Text.Json for JSON serialization*
+> *- Takes the input CSV path as the first command-line argument*
 > *- Outputs JSON to stdout by default, or to a file if `--output <path>` is provided*
 > *- The JSON should be an array of objects where each object's keys are the CSV column headers*
-> *- Handle these error cases: file not found (exit code 1 with message), empty CSV file (output empty JSON array `[]`), malformed CSV rows (skip the row and print a warning to stderr)*
-> *- Include a `--pretty` flag that formats the JSON with 2-space indentation*
-> *- Add a `if __name__ == '__main__'` block so it can be run as `python csv2json.py input.csv`*
-> *- Include docstrings and a brief usage comment at the top of the file"*
+> *- Handle these error cases: file not found (exit code 1 with message to stderr), empty CSV file (output empty JSON array `[]`), malformed CSV rows (skip the row and print a warning to stderr)*
+> *- Include a `--pretty` flag that formats the JSON with indentation*
+> *- Should be runnable as `dotnet run -- input.csv` or as a compiled executable `Csv2Json.exe input.csv`*
+> *- Include XML doc comments and a brief usage message when run with no arguments"*
 
 **Save this output too.**
 
@@ -74,39 +74,40 @@ Now give it this prompt:
 
 ### The task
 
-Build a minimal REST API endpoint with validation, a handler, and a test. We'll use Python with Flask for simplicity, but if you prefer a different stack, adapt the specification accordingly.
+Build a minimal REST API endpoint with validation, a handler, and tests. We'll use C# with ASP.NET Core minimal APIs.
 
 **Give the AI this specification:**
 
-> *"Create a small Flask API with a single endpoint: `POST /bookmarks`.*
+> *"Create a C# ASP.NET Core minimal API with a single endpoint: `POST /bookmarks`.*
 >
 > *The project should have this structure:*
 > ```
-> bookmarks/
->   app.py           # Flask app setup and route registration
->   handlers.py      # Request handler for the bookmark endpoint
->   validators.py    # Input validation logic
->   test_bookmarks.py  # Tests using pytest
+> Bookmarks/
+>   Program.cs              # App setup, endpoint registration
+>   BookmarkHandler.cs      # Request handler for the bookmark endpoint
+>   BookmarkValidator.cs    # Input validation logic
+>   BookmarkModels.cs       # Request/response DTOs
+>   BookmarkTests.cs        # Tests using xUnit and WebApplicationFactory
 > ```
 >
 > *The bookmark endpoint accepts JSON with these fields:*
-> *- `url` (required, must be a valid URL starting with http:// or https://)*
-> *- `title` (required, string, max 200 characters)*
-> *- `tags` (optional, list of strings, each max 50 characters)*
+> *- `Url` (required, must be a valid URL starting with http:// or https://)*
+> *- `Title` (required, string, max 200 characters)*
+> *- `Tags` (optional, list of strings, each max 50 characters)*
 >
 > *Behavior:*
-> *- Valid request: return 201 with the bookmark data plus a generated `id` (UUID) and `created_at` (ISO timestamp)*
+> *- Valid request: return 201 with the bookmark data plus a generated `Id` (GUID) and `CreatedAt` (ISO timestamp)*
 > *- Invalid request: return 400 with `{"error": "<description of what's wrong>"}` - be specific about which field failed and why*
-> *- Store bookmarks in memory (a list is fine - no database needed)*
+> *- Store bookmarks in memory (a `List<Bookmark>` is fine - no database needed)*
 >
 > *Tests should cover:*
 > *- Successful bookmark creation*
-> *- Missing required fields (url, title separately)*
+> *- Missing required fields (Url, Title separately)*
 > *- Invalid URL format*
 > *- Title exceeding max length*
 > *- Valid request with and without tags*
 >
-> *Use Flask's test client for testing. No external dependencies beyond Flask and pytest."*
+> *Use `WebApplicationFactory<Program>` for integration testing. No external dependencies beyond the standard ASP.NET Core and xUnit packages."*
 
 ### The workflow
 
@@ -122,17 +123,17 @@ Check each file:
 
 | File | What to look for |
 |------|-----------------|
-| `validators.py` | Does the URL validation actually work? Is it using regex, urllib, or just string checks? Are edge cases handled? |
-| `handlers.py` | Does it call the validator correctly? Does the 400 response include useful error messages? |
-| `app.py` | Is the route registered properly? Any unnecessary boilerplate? |
-| `test_bookmarks.py` | Do tests cover all the cases you specified? Are they testing *behavior* or just testing that the code runs? |
+| `BookmarkValidator.cs` | Does the URL validation actually work? Is it using `Uri.TryCreate`, regex, or just string checks? Are edge cases handled? |
+| `BookmarkHandler.cs` | Does it call the validator correctly? Does the 400 response include useful error messages? |
+| `Program.cs` | Is the endpoint registered properly? Any unnecessary boilerplate or middleware? |
+| `BookmarkModels.cs` | Are the DTOs clean? Are nullable types used correctly for optional fields? |
+| `BookmarkTests.cs` | Do tests cover all the cases you specified? Are they testing *behavior* or just testing that the code runs? |
 
 **3. Run the tests.**
 
 ```bash
-cd bookmarks
-pip install flask pytest  # if needed
-pytest test_bookmarks.py -v
+cd Bookmarks
+dotnet test --verbosity normal
 ```
 
 **4. Iterate if needed.**
@@ -148,7 +149,7 @@ This is the review-and-iterate loop that replaces line-by-line editing.
 When reviewing agentic output that spans files, focus on these in order:
 
 1. **Structure:** Did it create the files you asked for? Are responsibilities split correctly?
-2. **Interfaces:** Do the files connect properly? Does `handlers.py` import from `validators.py` correctly?
+2. **Interfaces:** Do the files connect properly? Does `BookmarkHandler` use `BookmarkValidator` correctly?
 3. **Logic:** Is the core logic correct? (Validation rules, response codes, error messages)
 4. **Edge cases:** What happens with empty input, weird URLs, very long strings?
 5. **Tests:** Do the tests actually verify the behavior, or do they just assert that the code doesn't crash?
@@ -215,7 +216,7 @@ This feels like overhead the first time. It gets faster, and the results are dra
 
 **3. Delegate** (let the agent work)
 
-- **Claude Code:** Pass the specification. If the codebase is large, you may want to point the agent at specific files: *"Start by reading `src/services/payment_service.py` and `tests/test_payment.py`."*
+- **Claude Code:** Pass the specification. If the codebase is large, you may want to point the agent at specific files: *"Start by reading `Services/PaymentService.cs` and `Tests/PaymentServiceTests.cs`."*
 - **Cursor:** Open the relevant files, use Agent mode with the specification. Cursor's context is scoped to your open files and workspace, so make sure the relevant files are accessible.
 
 **4. Review** (10-15 minutes)
@@ -230,8 +231,8 @@ Use the same multi-file review approach from Exercise 2:
 **5. Iterate** (as needed)
 
 If the first pass isn't right:
-- Be specific about what's wrong: *"The error handling in `process_payment` catches all exceptions, but it should only catch `PaymentGatewayError` and let other exceptions propagate."*
-- Reference patterns: *"Look at how `process_refund` handles errors in the same file - match that pattern."*
+- Be specific about what's wrong: *"The error handling in `ProcessPayment` catches all exceptions, but it should only catch `PaymentGatewayException` and let other exceptions propagate."*
+- Reference patterns: *"Look at how `ProcessRefund` handles errors in the same file - match that pattern."*
 - Don't restart from scratch unless the approach is fundamentally wrong. Iterate on what's there.
 
 ### Reflection: Manual vs. Agentic
