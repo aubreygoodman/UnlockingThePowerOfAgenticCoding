@@ -1,8 +1,8 @@
 # Vibe Coding Book Summary: Key Takeaways for Engineers
 
-A summary of the most useful concepts from *Vibe Coding* by Steve Yegge and Gene Kim. If you don't have time to read the full book, this will get you the highlights.
+These are my personal picks for the concepts from *Vibe Coding* by Steve Yegge and Gene Kim that I think are most relevant to our teams. The book covers a lot more — if you have time, read the whole thing. But if you don't, these are the parts I want you to walk away with.
 
-This pairs well with [foundational-concepts.md](foundational-concepts.md), which covers our team's mental models for agentic coding. The book reinforces many of the same ideas and adds some great analogies and frameworks worth knowing.
+This pairs well with [foundational-concepts.md](foundational-concepts.md), which covers our team's mental models for agentic coding. The book reinforces many of the same ideas, and the concepts below are the ones I think land hardest for how we work.
 
 ---
 
