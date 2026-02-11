@@ -8,6 +8,7 @@ Training materials for engineering teams learning to use agentic coding tools li
 |------|-------------|
 | [self-assessment-rubric.md](self-assessment-rubric.md) | Figure out which track to start with |
 | [foundational-concepts.md](foundational-concepts.md) | Core mental models everyone should read first |
+| [vibe-coding-book-summary.md](vibe-coding-book-summary.md) | Key takeaways from *Vibe Coding* by Yegge & Kim |
 | [exercises-track-1-building-the-mental-model.md](exercises-track-1-building-the-mental-model.md) | Exercises for engineers new to AI coding tools |
 | [exercises-track-2-autocomplete-to-delegation.md](exercises-track-2-autocomplete-to-delegation.md) | Exercises for Copilot users moving to agentic workflows |
 | [exercises-track-3-sharpening-the-edge.md](exercises-track-3-sharpening-the-edge.md) | Exercises for engineers already using agentic tools |
